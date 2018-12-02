@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <memory>
 
 
 #endif //_STD_HEADERS_H_

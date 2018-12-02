@@ -37,13 +37,14 @@ namespace nc{
             void Clear();
             void Print(const std::string& text);
             void setBorder(unsigned int type);
-            Window Split(float ratio, WindowPosition position);
+            std::shared_ptr<Window> Split(float ratio, WindowPosition position);
             inline void setTitle(std::string new_title) {title = new_title;};
             void showTitle();
             bool move(unsigned int new_x, unsigned int new_y);
             bool resize(unsigned int new_rows, unsigned int new_columns);
             void MoveCursor(unsigned int new_x, unsigned int new_y);
-            Window* GetNeighbour(WindowPosition position);
+            std::shared_ptr<Window> GetNeighbour(WindowPosition position);
+            void SetNeighbour(std::shared_ptr<Window> neighbour, WindowPosition position);
 
         private:
             WINDOW* handle;
@@ -53,14 +54,14 @@ namespace nc{
             unsigned int columns;
             std::string title;
             unsigned int border_type;
-            Window* neighbours[4];
+            std::shared_ptr<Window> neighbours[4];
     };
 
     class Environment{
         public:
             Environment();
             ~Environment();
-            Window getScreen();
+            std::shared_ptr<Window> getScreen();
     };
 
 };

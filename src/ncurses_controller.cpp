@@ -16,14 +16,16 @@ nc::Environment::~Environment()
     std::cout << "[NCurses] Environment cleared!\n" << std::endl;
 }
 
-nc::Window nc::Environment::getScreen()
+std::shared_ptr<nc::Window> nc::Environment::getScreen()
 {
     unsigned int x = 0, y = 0, rows = 0, columns = 0;
 
     getbegyx(stdscr, y, x);
     getmaxyx(stdscr, rows, columns);
 
-    return Window(x, y, rows, columns, (E_SINGLE_BORDER|E_CROSS_CORNER));        
+    std::shared_ptr<nc::Window> result = std::make_shared<nc::Window>(x, y, rows, columns, (E_SINGLE_BORDER|E_CROSS_CORNER));
+
+    return result;        
 }
 
 nc::Window::Window(unsigned int ax,
@@ -42,11 +44,6 @@ nc::Window::Window(unsigned int ax,
         //Move the window cursor so we don't overlap the border
         wmove(handle,1,1);
     }
-
-    for(unsigned int index = 0; index < 4; ++index)
-    {
-        neighbours[index] = NULL;
-    }
 }
 
 nc::Window::Window(WINDOW* win) : handle(win)
@@ -63,6 +60,7 @@ nc::Window::~Window()
     if(handle)
     {
         delwin(handle);
+        std::cout << "[NCurses] Window destroyed!" << std::endl;
     }
 }
 
@@ -109,10 +107,8 @@ void nc::Window::setBorder(unsigned int type)
     showTitle();
 }
 
-nc::Window nc::Window::Split(float ratio, WindowPosition position)
+std::shared_ptr<nc::Window> nc::Window::Split(float ratio, WindowPosition position)
 {
-    Window split;
-
     unsigned int split_x;
     unsigned int split_y;
     unsigned int split_rows;
@@ -171,12 +167,21 @@ nc::Window nc::Window::Split(float ratio, WindowPosition position)
         split_y    = y;
     }
 
-    split.move(split_x, split_y);
-    split.resize(split_rows, split_cols);
+    std::shared_ptr<Window> split = std::make_shared<nc::Window>(split_x,
+            split_y,
+            split_rows,
+            split_cols,
+            (E_SINGLE_BORDER|E_CROSS_CORNER));
 
-    split.Clear();
-    split.setBorder((E_SINGLE_BORDER|E_CROSS_CORNER));
-    split.MoveCursor(1,1);
+    //The splits should initially have the same neighbours as one another
+    for(unsigned int index = 0; index < 4; ++index)
+    {
+        split->SetNeighbour(this->GetNeighbour(static_cast<WindowPosition>(index)), static_cast<WindowPosition>(index));
+    }
+
+    split->Clear();
+    split->setBorder((E_SINGLE_BORDER|E_CROSS_CORNER));
+    split->MoveCursor(1,1);
 
     return split;
 }
@@ -231,7 +236,7 @@ void nc::Window::MoveCursor(unsigned int new_x, unsigned int new_y)
     wmove(handle,new_x,new_y);
 }
 
-nc::Window* nc::Window::GetNeighbour(WindowPosition position)
+std::shared_ptr<nc::Window> nc::Window::GetNeighbour(WindowPosition position)
 {
     if(NULL != neighbours[position])
     {
@@ -239,6 +244,11 @@ nc::Window* nc::Window::GetNeighbour(WindowPosition position)
     }
     else
     {
-        return this;
+        return NULL;
     }
+}
+
+void nc::Window::SetNeighbour(std::shared_ptr<nc::Window> neighbour, WindowPosition position)
+{
+    neighbours[position] = neighbour;
 }
