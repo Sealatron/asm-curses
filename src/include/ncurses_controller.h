@@ -1,7 +1,6 @@
 #ifndef NCURSES_CONTROLLER_H
 #define NCURSES_CONTROLLER_H
 
-#include "std-headers.h"
 #include <curses.h>
 
 namespace nc{
