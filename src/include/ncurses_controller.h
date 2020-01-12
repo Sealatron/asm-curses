@@ -2,6 +2,10 @@
 #define NCURSES_CONTROLLER_H
 
 #include <curses.h>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <memory>
 
 namespace nc{
 
