@@ -2,18 +2,18 @@
 
 nc::Environment::Environment()
 {
-    std::cout << "[NCurses] Setting up environment...\n" << std::endl;
+    std::cout << "[asm-curses] Setting up environment..." << std::endl;
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
-    std::cout << "[NCurses] Environment setup complete!\n" << std::endl;
+    std::cout << "[asm-curses] Environment setup complete!" << std::endl;
 }
 
 nc::Environment::~Environment()
 {
     endwin();
-    std::cout << "[NCurses] Environment cleared!\n" << std::endl;
+    std::cout << "[asm-curses] Environment cleared!" << std::endl;
 }
 
 std::shared_ptr<nc::Window> nc::Environment::getScreen()
@@ -34,16 +34,20 @@ nc::Window::Window(unsigned int ax,
                    unsigned int acolumns,
                    unsigned int aborder) : x(ax), y(ay), rows(arows), columns(acolumns), border_type(aborder)
 {
-    handle = newwin(rows,columns,y,x);
-    keypad(handle, TRUE);
-
-    setBorder(border_type);
-
     if(E_NO_BORDER != aborder)
     {
-        //Move the window cursor so we don't overlap the border
-        wmove(handle,1,1);
+        border_win = newwin(rows,columns,y,x);
+        setBorder(border_type);
+
+        //Create a second window inside the first, with 2 less rows/columns and shifted down one row/column.
+        handle = newwin(rows-2,columns-2,y+1,x+1);
     }
+    else
+    {
+        handle = newwin(rows,columns,y,x);
+    }
+
+    keypad(handle, TRUE);
 }
 
 nc::Window::Window(WINDOW* win) : handle(win)
@@ -60,7 +64,7 @@ nc::Window::~Window()
     if(handle)
     {
         delwin(handle);
-        std::cout << "[NCurses] Window destroyed!" << std::endl;
+        std::cout << "[asm-curses] Window destroyed!" << std::endl;
     }
 }
 
@@ -103,7 +107,7 @@ void nc::Window::setBorder(unsigned int type)
 
     border_type = type;
 
-    wborder(handle, ls, rs, ts, bs, tl, tr, bl, br);
+    wborder(border_win, ls, rs, ts, bs, tl, tr, bl, br);
     showTitle();
 }
 
@@ -217,6 +221,9 @@ bool nc::Window::resize(unsigned int new_rows, unsigned int new_columns)
 
 void nc::Window::refresh()
 {
+    if(border_type != E_NO_BORDER)
+        wrefresh(border_win);
+
     wrefresh(handle);
 }
 

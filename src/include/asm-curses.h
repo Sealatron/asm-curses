@@ -51,6 +51,7 @@ namespace nc{
 
         private:
             WINDOW* handle;
+            WINDOW* border_win;
             unsigned int x;
             unsigned int y;
             unsigned int rows;
