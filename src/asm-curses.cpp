@@ -1,4 +1,4 @@
-#include <ncurses_controller.h>
+#include <asm-curses.h>
 
 nc::Environment::Environment()
 {
