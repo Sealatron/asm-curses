@@ -10,6 +10,6 @@ target_link_libraries("${PROJECT_NAME}-example" "${PROJECT_NAME}-lib" )
 
 install(TARGETS "${PROJECT_NAME}-example" DESTINATION bin) 
 
-include(CTest)
+#include(CTest)
 
-add_test("Test1" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-example")
+#add_test("Test1" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-example")

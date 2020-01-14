@@ -7,7 +7,6 @@ int main(int argc, char** argv)
     std::shared_ptr<nc::Window> main_window = ui.getScreen();
     main_window->setTitle("main");
     main_window->setBorder(nc::E_SINGLE_BORDER);
-    main_window->showTitle();
     main_window->Print("Hello Main!");
     main_window->refresh();
 
@@ -15,7 +14,6 @@ int main(int argc, char** argv)
     browser->SetNeighbour(main_window, nc::E_RIGHT);
     main_window->SetNeighbour(browser, nc::E_LEFT);
     browser->setTitle("browser");
-    browser->showTitle();
     browser->setBorder(nc::E_DOUBLE_BORDER);
     browser->Print("Hello Browser!");
     browser->refresh();
@@ -24,7 +22,6 @@ int main(int argc, char** argv)
     console->SetNeighbour(main_window, nc::E_TOP);
     main_window->SetNeighbour(console, nc::E_BOTTOM);
     console->setTitle("console");
-    console->showTitle();
     console->Print("Hello Console!");
     console->refresh();
 

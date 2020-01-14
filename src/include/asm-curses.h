@@ -37,20 +37,21 @@ namespace nc{
             void refresh();
             void Put(char character);
             int Get();
-            void Clear();
+            void clear();
             void Print(const std::string& text);
             void setBorder(unsigned int type);
             std::shared_ptr<Window> Split(float ratio, WindowPosition position);
             inline void setTitle(std::string new_title) {title = new_title;};
-            void showTitle();
             bool move(unsigned int new_x, unsigned int new_y);
             bool resize(unsigned int new_rows, unsigned int new_columns);
             void MoveCursor(unsigned int new_x, unsigned int new_y);
             std::shared_ptr<Window> GetNeighbour(WindowPosition position);
             void SetNeighbour(std::shared_ptr<Window> neighbour, WindowPosition position);
+            void drawBorder();
+            void drawTitle();
 
         private:
-            WINDOW* handle;
+            WINDOW* inner_win;
             WINDOW* border_win;
             unsigned int x;
             unsigned int y;

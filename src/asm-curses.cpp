@@ -1,5 +1,19 @@
 #include <asm-curses.h>
 
+void print_win_numbers(WINDOW* win)
+
+{
+	int x, y, columns, rows = 0;
+	getbegyx(win, y, x);
+	getmaxyx(win, columns, rows);
+
+	std::cout << "x = " << x << "; ";
+	std::cout << "y = " << y << "; ";
+	std::cout << "r = " << rows << "; ";
+	std::cout << "c = " << columns << std::endl;
+}
+
+
 nc::Environment::Environment()
 {
     std::cout << "[asm-curses] Setting up environment..." << std::endl;
@@ -34,23 +48,16 @@ nc::Window::Window(unsigned int ax,
                    unsigned int acolumns,
                    unsigned int aborder) : x(ax), y(ay), rows(arows), columns(acolumns), border_type(aborder)
 {
-    if(E_NO_BORDER != aborder)
-    {
-        border_win = newwin(rows,columns,y,x);
-        setBorder(border_type);
+	border_win = newwin(rows, columns, y, x);
+	setBorder(border_type);
 
-        //Create a second window inside the first, with 2 less rows/columns and shifted down one row/column.
-        handle = newwin(rows-2,columns-2,y+1,x+1);
-    }
-    else
-    {
-        handle = newwin(rows,columns,y,x);
-    }
+	//Create a second window inside the first, with 2 less rows/columns and shifted down one row/column.
+	inner_win = newwin(rows - 2, columns - 2, y + 1, x + 1);
 
-    keypad(handle, TRUE);
+    keypad(inner_win, TRUE);
 }
 
-nc::Window::Window(WINDOW* win) : handle(win)
+nc::Window::Window(WINDOW* win) : inner_win(win)
 {
     if(win)
     {
@@ -61,35 +68,40 @@ nc::Window::Window(WINDOW* win) : handle(win)
 
 nc::Window::~Window()
 {
-    if(handle)
+    if(inner_win)
     {
-        delwin(handle);
+        delwin(inner_win);
         std::cout << "[asm-curses] Window destroyed!" << std::endl;
     }
 }
 
 void nc::Window::Put(char character)
 {
-    waddch(handle,character);
+    waddch(inner_win,character);
 }
 
 void nc::Window::Print(const std::string& text)
 {
-    wprintw(handle, text.c_str());
+    wprintw(inner_win, text.c_str());
 }
 
 void nc::Window::setBorder(unsigned int type)
 {
+    border_type = type;
+}
+
+void nc::Window::drawBorder()
+{
     char ls=' ', rs=' ', ts=' ', bs=' ', tl=' ', tr=' ', bl=' ', br= ' ';
 
-    if((type & E_SINGLE_BORDER) == E_SINGLE_BORDER)
+    if((border_type & E_SINGLE_BORDER) == E_SINGLE_BORDER)
     {
         ts = '-';
         bs = '-';
         ls = '|';
         rs = '|';
     }
-    else if((type & E_DOUBLE_BORDER) == E_DOUBLE_BORDER)
+	else if((border_type & E_DOUBLE_BORDER) == E_DOUBLE_BORDER)
     {
         ts = '=';
         bs = '=';
@@ -97,7 +109,7 @@ void nc::Window::setBorder(unsigned int type)
         rs = 'H';
     }
 
-    if((type & E_CROSS_CORNER) == E_CROSS_CORNER)
+    if((border_type & E_CROSS_CORNER) == E_CROSS_CORNER)
     {
         tl = '+';
         tr = '+';
@@ -105,11 +117,17 @@ void nc::Window::setBorder(unsigned int type)
         br = '+';
     }
 
-    border_type = type;
-
     wborder(border_win, ls, rs, ts, bs, tl, tr, bl, br);
-    showTitle();
 }
+
+void nc::Window::drawTitle()
+{
+    if(0 != title.length())
+    {
+        mvwprintw(border_win,0,4, title.c_str());
+    }
+}
+
 
 std::shared_ptr<nc::Window> nc::Window::Split(float ratio, WindowPosition position)
 {
@@ -183,64 +201,62 @@ std::shared_ptr<nc::Window> nc::Window::Split(float ratio, WindowPosition positi
         split->SetNeighbour(this->GetNeighbour(static_cast<WindowPosition>(index)), static_cast<WindowPosition>(index));
     }
 
-    split->Clear();
-    split->setBorder((E_SINGLE_BORDER|E_CROSS_CORNER));
-    split->MoveCursor(1,1);
+    refresh();
 
     return split;
 }
 
-void nc::Window::showTitle()
-{
-    if(0 != title.length())
-    {
-        unsigned int cur_x = 0, cur_y = 0;
-        getyx(handle, cur_y, cur_x);
-        mvwprintw(handle,0,4, title.c_str());
-        wmove(handle, cur_y, cur_x);
-    }
-}
-
 bool nc::Window::move(unsigned int new_x, unsigned int new_y)
 {
-    mvwin(handle, new_y, new_x);
+    mvwin(border_win, new_y, new_x);
+    mvwin(inner_win, new_y+1, new_x+1);
     x = new_x;
     y = new_y;
+
+	std::cout << "Move Border: ";
+	print_win_numbers(border_win);
+	std::cout << "Move Inner: ";
+	print_win_numbers(inner_win);
 
     return true;
 }
 
 bool nc::Window::resize(unsigned int new_rows, unsigned int new_columns)
 {
-    wresize(handle, new_rows, new_columns);
+    wresize(border_win, new_rows, new_columns);
+    wresize(inner_win, new_rows-2, new_columns-2);
     rows = new_rows;
     columns = new_columns;
+
+	std::cout << "Resize Border: ";
+	print_win_numbers(border_win);
+	std::cout << "Resize Inner: ";
+	print_win_numbers(inner_win);
 
     return true;
 }
 
 void nc::Window::refresh()
 {
-    if(border_type != E_NO_BORDER)
-        wrefresh(border_win);
-
-    wrefresh(handle);
+    drawBorder();
+    drawTitle();
+	wrefresh(border_win);
+	wrefresh(inner_win);
 }
 
 int nc::Window::Get()
 {
-    return wgetch(handle);
+    return wgetch(inner_win);
 }
 
-void nc::Window::Clear()
+void nc::Window::clear()
 {
-    wclear(handle);
-    setBorder(border_type);
+    wclear(inner_win);
 }
 
 void nc::Window::MoveCursor(unsigned int new_x, unsigned int new_y)
 {
-    wmove(handle,new_x,new_y);
+    wmove(inner_win,new_x,new_y);
 }
 
 std::shared_ptr<nc::Window> nc::Window::GetNeighbour(WindowPosition position)
