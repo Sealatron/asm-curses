@@ -68,10 +68,18 @@ nc::Window::Window(WINDOW* win) : inner_win(win)
 
 nc::Window::~Window()
 {
+    std::cout << "[asm-curses] Destroying Window..." << std::endl;
+
     if(inner_win)
     {
         delwin(inner_win);
-        std::cout << "[asm-curses] Window destroyed!" << std::endl;
+        std::cout << "[asm-curses] Inner Window destroyed!" << std::endl;
+    }
+
+    if(border_win)
+    {
+        delwin(inner_win);
+        std::cout << "[asm-curses] Border Window destroyed!" << std::endl;
     }
 }
 
@@ -261,14 +269,7 @@ void nc::Window::MoveCursor(unsigned int new_x, unsigned int new_y)
 
 std::shared_ptr<nc::Window> nc::Window::GetNeighbour(WindowPosition position)
 {
-    if(NULL != neighbours[position])
-    {
-        return neighbours[position];
-    }
-    else
-    {
-        return NULL;
-    }
+    return neighbours[position];
 }
 
 void nc::Window::SetNeighbour(std::shared_ptr<nc::Window> neighbour, WindowPosition position)

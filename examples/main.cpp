@@ -10,6 +10,8 @@ int main(int argc, char** argv)
     main_window->Print("Hello Main!");
     main_window->refresh();
 
+    std::cout << "main_window.use_count() == " << main_window.use_count() << std::endl;
+
     std::shared_ptr<nc::Window> browser = main_window->Split(0.3f, nc::E_LEFT);
     browser->SetNeighbour(main_window, nc::E_RIGHT);
     main_window->SetNeighbour(browser, nc::E_LEFT);
@@ -18,12 +20,16 @@ int main(int argc, char** argv)
     browser->Print("Hello Browser!");
     browser->refresh();
 
+    std::cout << "browser.use_count() == " << browser.use_count() << std::endl;
+
     std::shared_ptr<nc::Window> console = main_window->Split(0.3f, nc::E_BOTTOM);
     console->SetNeighbour(main_window, nc::E_TOP);
     main_window->SetNeighbour(console, nc::E_BOTTOM);
     console->setTitle("console");
     console->Print("Hello Console!");
     console->refresh();
+
+    std::cout << "console.use_count() == " << console.use_count() << std::endl;
 
     std::shared_ptr<nc::Window> active_window = main_window;
 
@@ -60,6 +66,7 @@ int main(int argc, char** argv)
                 active_window->Put(a);
                 break;
         }
+        std::cout << "active_window.use_count() == " << active_window.use_count() << std::endl;
     }
 
     return 0;
